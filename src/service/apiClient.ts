@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'https://king.theqalk.com',
+    baseURL: 'https://testking.kikpax.com',
     timeout: 600000,
     headers: {
         'Content-Type': 'application/json',
