@@ -9,10 +9,10 @@ const Register: React.FC = () => {
     const [step, setStep] = useState(1);
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [referral, setReferral] = useState('');  // Champ pour le code parrain (optionnel)
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
-    const phoneNumber = ' ';
-    const referral = '';
     const navigate = useNavigate();
 
     const handleRegister = async () => {
@@ -26,20 +26,25 @@ const Register: React.FC = () => {
             return;
         }
 
+        if (!phoneNumber) {
+            toast.error('Numéro de téléphone est obligatoire.');
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await registerService({
                 fullName,
                 email,
                 phoneNumber,
-                referral,
+                referral,  // Inclure le code parrain dans les données envoyées
             });
             if (!response.success) {
                 setLoading(false);
                 toast.error(response.message);
                 return;
             }
-            await otpService({ email });
+            await otpService({ email: email || phoneNumber });  // Envoie OTP à l'email ou au téléphone
             setLoading(false);
             setStep(2); // Passe à l'étape 2 pour entrer le code
         } catch (error: any) {
@@ -58,7 +63,7 @@ const Register: React.FC = () => {
 
     const handleCodeVerification = async () => {
         const response = await loginService({
-            email,
+            email: email || phoneNumber,
             otpCode: code,
         });
         if (!response.success) {
@@ -67,14 +72,13 @@ const Register: React.FC = () => {
         }
         toast.success('Vous êtes connecté avec succès.');
         navigate('/');
-
     };
 
     const handleResendCode = async () => {
         try {
             setLoading(true);
-            await otpService({ email });
-            toast.success("Le code a été renvoyé à votre adresse email.");
+            await otpService({ email: email || phoneNumber });
+            toast.success("Le code a été renvoyé à votre adresse.");
             setLoading(false);
         } catch (error: any) {
             toast.error('Une erreur s\'est produite lors de l\'envoi du code. Veuillez réessayer.');
@@ -82,14 +86,14 @@ const Register: React.FC = () => {
         }
     };
 
-    const handleChangeEmail = () => {
-        setStep(1); // Retourne à l'étape 1 pour changer l'email
+    const handleChangeEmailOrPhone = () => {
+        setStep(1); // Retourne à l'étape 1 pour changer l'email ou le numéro de téléphone
     };
 
     return (
         <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-                <h2 className="text-3xl font-bold text-center mb-6">Register</h2>
+                <h2 className="text-3xl font-bold text-center mb-6">Créer un compte</h2>
 
                 {loading ? (
                     <div className="flex justify-center items-center mb-6">
@@ -113,6 +117,20 @@ const Register: React.FC = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
+                                <input
+                                    type="tel"
+                                    placeholder="Phone Number"
+                                    className="w-full p-3 mb-4 border rounded"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Referral Code (Optionnel)"
+                                    className="w-full p-3 mb-4 border rounded"
+                                    value={referral}
+                                    onChange={(e) => setReferral(e.target.value)}
+                                />
                                 <button
                                     className={`w-full bg-blue-600 text-white p-3 rounded mb-4 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     onClick={handleRegister}
@@ -123,7 +141,7 @@ const Register: React.FC = () => {
                             </>
                         ) : (
                             <>
-                                <p className="text-center mb-4">Nous avons envoyé un code à <strong>{email}</strong>.</p>
+                                <p className="text-center mb-4">Nous avons envoyé un code à <strong>{email || phoneNumber}</strong>.</p>
                                 <input
                                     type="text"
                                     placeholder="Enter Code"
@@ -147,9 +165,9 @@ const Register: React.FC = () => {
                                 </button>
                                 <button
                                     className="w-full text-gray-600 hover:text-gray-800 text-center"
-                                    onClick={handleChangeEmail}
+                                    onClick={handleChangeEmailOrPhone}
                                 >
-                                    Changer l'adresse email
+                                    Changer l'adresse email ou le numéro de téléphone
                                 </button>
                             </>
                         )}
